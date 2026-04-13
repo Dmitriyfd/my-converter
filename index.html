@@ -39,29 +39,53 @@
     <p id="loading">Загрузка...</p>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script>
-    // ⚠️ ВСТАВЬ СЮДА СВОЙ ANON PUBLIC КЛЮЧ ИЗ SUPABASE
-    const supabaseUrl = 'https://kezprdouakvdiwjivlze.supabase.co';
-    const supabaseKey = 'sb_publishable_dwckqZDHdxb1DXRLpI__5A_qcCpTPfl'; 
-    const db = supabase.createClient(supabaseUrl, supabaseKey);
 
-    // 1. Авторизация
-    async function authLogin() {
-      const e = document.getElementById('a-email').value;
-      const p = document.getElementById('a-pass').value;
-      const { error } = await db.auth.signInWithPassword({ email: e, password: p });
-      document.getElementById('auth-msg').textContent = error ? error.message : '✅ Вошли!';
-      document.getElementById('auth-msg').style.color = error ? 'red' : 'green';
-    }
-    async function authReg() {
-      const e = document.getElementById('a-email').value;
-      const p = document.getElementById('a-pass').value;
-      const { error } = await db.auth.signUp({ email: e, password: p });
-      document.getElementById('auth-msg').textContent = error ? error.message : '✅ Аккаунт создан. Войди!';
-      document.getElementById('auth-msg').style.color = error ? 'red' : 'green';
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  const supabaseUrl = 'https://kezprdouakvdiwjivlze.supabase.co';
+  const supabaseKey = 'sb_publishable_dwckqZDHdxb1DXRLpI__5A_qcCpTPfl'; // ⚠️ бери в Supabase → Settings → API
+  const db = supabase.createClient(supabaseUrl, supabaseKey);
+
+  async function authLogin() {
+    const { error } = await db.auth.signInWithPassword({ email: document.getElementById('a-email').value, password: document.getElementById('a-pass').value });
+    const m = document.getElementById('auth-msg'); m.textContent = error ? error.message : '✅ Вошли!'; m.style.color = error ? 'red' : 'green';
+  }
+  async function authReg() {
+    const { error } = await db.auth.signUp({ email: document.getElementById('a-email').value, password: document.getElementById('a-pass').value });
+    const m = document.getElementById('auth-msg'); m.textContent = error ? error.message : '✅ Создан! Теперь войди.'; m.style.color = error ? 'red' : 'green';
+  }
+
+  async function createAd() {
+    const title = document.getElementById('ad-title').value;
+    const desc = document.getElementById('ad-desc').value;
+    const fileInput = document.getElementById('ad-photo');
+    const msg = document.getElementById('ad-msg');
+    let photoUrl = null;
+
+    if (fileInput.files.length > 0) {
+      const file = fileInput.files[0];
+      const fileName = `${Date.now()}_${file.name}`;
+      const { error: upErr } = await db.storage.from('ad-photos').upload(fileName, file);
+      if (upErr) { msg.style.color='red'; msg.textContent = 'Ошибка фото: ' + upErr.message; return; }
+      photoUrl = db.storage.from('ad-photos').getPublicUrl(fileName).data.publicUrl;
     }
 
-    // 2. Создание объявления с фото
-    async function createAd() {
-      const title = document.getElementById('ad-title').value
+    const { error: dbErr } = await db.from('ads').insert({ title, description: desc, image_url: photoUrl });
+    if (dbErr) { msg.style.color='red'; msg.textContent = 'Ошибка: ' + dbErr.message; }
+    else { msg.style.color='green'; msg.textContent = 'Добавлено!'; document.getElementById('ad-title').value=''; document.getElementById('ad-desc').value=''; fileInput.value=''; loadAds(); }
+  }
+
+  async function loadAds() {
+    const { data, error } = await db.from('ads').select('*').order('created_at', { ascending: false });
+    if (error) { document.getElementById('loading').textContent = 'Ошибка: ' + error.message; return; }
+    let html = '';
+    data.forEach(ad => {
+      const img = ad.image_url ? `<img src="${ad.image_url}" style="width:100%; border-radius:6px; margin-bottom:8px;">` : '';
+      html += `<div style="background:#fff; padding:12px; margin-bottom:10px; border-radius:8px; border:1px solid #ddd; text-align:left;">${img}<strong>${ad.title}</strong><br><span style="color:#555; font-size:14px;">${ad.description || 'Без описания'}</span></div>`;
+    });
+    document.getElementById('ads-list').innerHTML = `<h3>Все объявления</h3>` + (html || '<p>Пока пусто. Создай первое! 👆</p>');
+  }
+  document.addEventListener('DOMContentLoaded', loadAds);
+</script>
+</body>
+</html>
