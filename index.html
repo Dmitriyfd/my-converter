@@ -134,11 +134,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
+
 function updateMap(ads) {
   if (!markersLayer) return;
   markersLayer.clearLayers();
+  const coords = [];
+
   ads.forEach(ad => {
     if (ad.lat && ad.lng) {
+      coords.push([ad.lat, ad.lng]);
       const popupContent = `
         <div style="text-align:center; min-width:130px;">
           <strong>${ad.title}</strong><br>
@@ -150,7 +154,15 @@ function updateMap(ads) {
       L.marker([ad.lat, ad.lng]).bindPopup(popupContent).addTo(markersLayer);
     }
   });
+
+  // 📐 Авто-зум: подгоняем карту под все точки, если она видна
+  if (coords.length > 0 && document.getElementById('map-container').style.display !== 'none') {
+    map.fitBounds(L.latLngBounds(coords), { padding: [40, 40] });
+  }
 }
+
+
+
 
 function openAdDetail(id) {
   const ad = currentAdsData.find(a => a.id == id);
@@ -306,6 +318,32 @@ async function logout() {
 document.addEventListener('DOMContentLoaded', () => {
   checkAuth();
   loadAds();
+});
+
+
+
+
+
+
+document.addEventListener('DOMContentLoaded', () => {
+  const btn = document.getElementById('toggle-map-btn');
+  const container = document.getElementById('map-container');
+  if (btn && container) {
+    btn.addEventListener('click', () => {
+      if (container.style.display === 'none') {
+        container.style.display = 'block';
+        btn.textContent = '🗺️ Скрыть карту';
+        initMap(); // создаёт карту один раз
+        setTimeout(() => {
+          map.invalidateSize(); // «будим» скрытый холст
+          updateMap(currentAdsData); // отрисовка маркеров + авто-зум
+        }, 100);
+      } else {
+        container.style.display = 'none';
+        btn.textContent = '🗺️ Показать объявления на карте';
+      }
+    });
+  }
 });
 
 </script>
