@@ -89,23 +89,24 @@ async function createAd() {
   <p id="loading">Загрузка...</p>
 </div>
 <script>
-  async function loadAds() {
-    const container = document.getElementById('ads-list');
-    const { data, error } = await db.from('ads').select('*').order('created_at', { ascending: false });
-    
-    if (error) { document.getElementById('loading').textContent = 'Ошибка: ' + error.message; return; }
-    
-    let html = '';
-    data.forEach(ad => {
-      html += `<div style="background:#fff; padding:12px; margin-bottom:8px; border-radius:6px; border:1px solid #ddd;">
-                 <strong>${ad.title}</strong><br>
-                 <span style="color:#555; font-size:14px;">${ad.description || 'Без описания'}</span>
-               </div>`;
-    });
-    container.innerHTML = html || '<p>Пока нет объявлений. Создай первое! 👆</p>';
-  }
-  // Запускаем сразу, как только страница прогрузилась
-  document.addEventListener('DOMContentLoaded', loadAds);
+async function loadAds() {
+  const container = document.getElementById('ads-list');
+  const { data, error } = await db.from('ads').select('*').order('created_at', { ascending: false });
+  if (error) { document.getElementById('loading').textContent = 'Ошибка: ' + error.message; return; }
+  
+  let html = '';
+  data.forEach(ad => {
+    const img = ad.image_url 
+      ? `<img src="${ad.image_url}" style="width:100%; max-height:200px; object-fit:cover; border-radius:4px; margin-bottom:8px;">` 
+      : '';
+    html += `<div style="background:#fff; padding:12px; margin-bottom:8px; border-radius:6px; border:1px solid #ddd;">
+               ${img}
+               <strong>${ad.title}</strong><br>
+               <span style="color:#555; font-size:14px;">${ad.description || 'Без описания'}</span>
+             </div>`;
+  });
+  container.innerHTML = html || '<p>Пока нет объявлений. Создай первое! 👆</p>';
+}
 </script>
 
 <div id="ads-list" style="margin:20px 0; padding:10px; background:#fafafa; border-radius:8px;">
