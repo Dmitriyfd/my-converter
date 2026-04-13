@@ -153,17 +153,18 @@ function resetLocation() {
     const { error } = await db.auth.signUp({ email: document.getElementById('a-email').value, password: document.getElementById('a-pass').value });
     const m = document.getElementById('auth-msg'); m.textContent = error ? error.message : '✅ Создан! Теперь войди.'; m.style.color = error ? 'red' : 'green';
   }
-
-  async function createAd() {
-  const title = document.getElementById('ad-title').value;
-  const desc = document.getElementById('ad-desc').value;
+async function createAd() {
+  const title = document.getElementById('ad-title').value.trim();
+  const desc = document.getElementById('ad-desc').value.trim();
   const fileInput = document.getElementById('ad-photo');
   const msg = document.getElementById('ad-msg');
-  let photoUrl = null;
 
-  // 1. Спрашиваем у Supabase: кто сейчас вошёл?
+  if (!title || !desc) { msg.style.color='red'; msg.textContent='Заполни название и описание'; return; }
   const { data: { user } } = await db.auth.getUser();
+  if (!user) { msg.style.color='red'; msg.textContent='Войдите, чтобы создать объявление'; return; }
+  if (selLat === null || selLng === null) { msg.style.color='red'; msg.textContent='🗺️ Кликни на карту, чтобы указать место'; return; }
 
+  let photoUrl = null;
   if (fileInput.files.length > 0) {
     const file = fileInput.files[0];
     const fileName = `${Date.now()}_${file.name}`;
@@ -172,25 +173,20 @@ function resetLocation() {
     photoUrl = db.storage.from('ad-photos').getPublicUrl(fileName).data.publicUrl;
   }
 
-  // 2. Передаём user_id вместе с остальными данными
-  const { error: dbErr } = await db.from('ads').insert({ 
-    title, 
-    description: desc, 
-    image_url: photoUrl, 
-    user_id: user?.id 
+  const { error } = await db.from('ads').insert({
+    title, description: desc, image_url: photoUrl, user_id: user.id,
+    lat: selLat, lng: selLng
   });
 
-  if (dbErr) { msg.style.color='red'; msg.textContent = 'Ошибка: ' + dbErr.message; }
-  else { 
-    msg.style.color='green'; 
-    msg.textContent = 'Добавлено!'; 
-    document.getElementById('ad-title').value=''; 
-    document.getElementById('ad-desc').value=''; 
-    fileInput.value=''; 
-    loadAds(); 
+  if (error) { msg.style.color='red'; msg.textContent = 'Ошибка: ' + error.message; }
+  else {
+    msg.style.color='green'; msg.textContent = 'Добавлено!';
+    document.getElementById('ad-title').value=''; document.getElementById('ad-desc').value=''; fileInput.value='';
+    resetLocation();
+    loadAds(); // автоматически обновит и список, и карту
   }
-
-  }
+  
+}
 
 async function loadAds(query = '') {
   let dbQuery = db.from('ads').select('*').order('created_at', { ascending: false });
