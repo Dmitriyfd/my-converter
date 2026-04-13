@@ -24,6 +24,27 @@
   const db = supabase.createClient(supabaseUrl, supabaseKey);
   console.log('Supabase подключён! Готовы работать с базой.');
 </script>
+
+
+<div style="background:#f4f4f4; padding:15px; border-radius:8px; margin:10px 0;">
+  <h3>Вход / Регистрация</h3>
+  <input id="reg-email" placeholder="Email" style="padding:6px; width:60%; margin-right:5px;">
+  <input id="reg-pass" type="password" placeholder="Пароль" style="padding:6px; width:60%;">
+  <button onclick="registerUser()" style="padding:6px 12px; background:#2563eb; color:#fff; border:none; cursor:pointer; margin-top:5px;">Зарегистрироваться</button>
+  <p id="reg-msg" style="font-weight:bold;"></p>
+</div>
+<script>
+  async function registerUser() {
+    const email = document.getElementById('reg-email').value;
+    const pass = document.getElementById('reg-pass').value;
+    const msg = document.getElementById('reg-msg');
+    const { data, error } = await db.auth.signUp({ email, password: pass });
+    if (error) { msg.style.color='red'; msg.textContent = error.message; }
+    else { msg.style.color='green'; msg.textContent = 'Успех! Проверь консоль или войди.'; }
+  }
+</script>
+
+
 </body>
 </html>
 <head>
