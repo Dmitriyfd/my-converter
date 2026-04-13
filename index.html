@@ -45,6 +45,27 @@
 </script>
 
 
+
+<div style="background:#eef2ff; padding:15px; border-radius:8px; margin:10px 0;">
+  <h3>Новое объявление</h3>
+  <input id="ad-title" placeholder="Название" style="padding:6px; width:80%; margin-bottom:5px;">
+  <textarea id="ad-desc" placeholder="Описание" style="padding:6px; width:80%; height:60px; margin-bottom:5px;"></textarea>
+  <button onclick="createAd()" style="padding:6px 12px; background:#16a34a; color:#fff; border:none; cursor:pointer;">Опубликовать</button>
+  <p id="ad-msg" style="font-weight:bold;"></p>
+</div>
+<script>
+  async function createAd() {
+    const title = document.getElementById('ad-title').value;
+    const desc = document.getElementById('ad-desc').value;
+    const msg = document.getElementById('ad-msg');
+    const { error } = await db.from('ads').insert({ title, description: desc });
+    if (error) { msg.style.color='red'; msg.textContent = 'Ошибка: ' + error.message; }
+    else { msg.style.color='green'; msg.textContent = 'Объявление добавлено!'; 
+           document.getElementById('ad-title').value = ''; document.getElementById('ad-desc').value = ''; }
+  }
+</script>
+
+
 </body>
 </html>
 <head>
