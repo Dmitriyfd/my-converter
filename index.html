@@ -46,23 +46,39 @@
 
 
 
-<div style="background:#eef2ff; padding:15px; border-radius:8px; margin:10px 0;">
+<div id="ad-panel" style="background:#eef2ff; padding:12px; border-radius:8px; margin:10px 0;">
   <h3>Новое объявление</h3>
-  <input id="ad-title" placeholder="Название" style="padding:6px; width:80%; margin-bottom:5px;">
-  <textarea id="ad-desc" placeholder="Описание" style="padding:6px; width:80%; height:60px; margin-bottom:5px;"></textarea>
-  <button onclick="createAd()" style="padding:6px 12px; background:#16a34a; color:#fff; border:none; cursor:pointer;">Опубликовать</button>
+  <input id="ad-title" placeholder="Название" style="padding:5px; width:80%; margin-bottom:5px;">
+  <textarea id="ad-desc" placeholder="Описание" style="padding:5px; width:80%; height:50px; margin-bottom:5px;"></textarea>
+  <input type="file" id="ad-photo" accept="image/*" style="margin-bottom:5px;">
+  <button onclick="createAd()" style="padding:5px 12px; background:#16a34a; color:#fff; border:none; cursor:pointer;">Опубликовать</button>
   <p id="ad-msg" style="font-weight:bold;"></p>
 </div>
 <script>
-  async function createAd() {
-    const title = document.getElementById('ad-title').value;
-    const desc = document.getElementById('ad-desc').value;
-    const msg = document.getElementById('ad-msg');
-    const { error } = await db.from('ads').insert({ title, description: desc });
-    if (error) { msg.style.color='red'; msg.textContent = 'Ошибка: ' + error.message; }
-    else { msg.style.color='green'; msg.textContent = 'Объявление добавлено!'; 
-           document.getElementById('ad-title').value = ''; document.getElementById('ad-desc').value = ''; }
+async function createAd() {
+  const title = document.getElementById('ad-title').value;
+  const desc = document.getElementById('ad-desc').value;
+  const fileInput = document.getElementById('ad-photo');
+  const msg = document.getElementById('ad-msg');
+  let photoUrl = null;
+
+  if (fileInput.files.length > 0) {
+    const file = fileInput.files[0];
+    const fileName = `${Date.now()}_${file.name}`;
+    const { data, error } = await db.storage.from('ad-photos').upload(fileName, file);
+    if (error) { msg.style.color='red'; msg.textContent = 'Ошибка фото: ' + error.message; return; }
+    const { publicUrl } = db.storage.from('ad-photos').getPublicUrl(fileName).data;
+    photoUrl = publicUrl;
   }
+
+  const { error } = await db.from('ads').insert({ title, description: desc, image_url: photoUrl });
+  if (error) { msg.style.color='red'; msg.textContent = 'Ошибка: ' + error.message; }
+  else { 
+    msg.style.color='green'; msg.textContent = 'Объявление добавлено!'; 
+    document.getElementById('ad-title').value = ''; document.getElementById('ad-desc').value = ''; fileInput.value = '';
+    loadAds();
+  }
+}
 </script>
 
 
