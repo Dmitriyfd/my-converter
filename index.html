@@ -49,8 +49,98 @@
   </div>
 
 
+
+
+
+
+
+
+<!-- Leaflet стили и скрипт -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<!-- Кнопка переключения -->
+<button id="toggle-map-btn" style="display:block; margin:10px auto; padding:8px 16px; background:#3b82f6; color:#fff; border:none; border-radius:8px; cursor:pointer; font-size:14px;">🗺️ Показать объявления на карте</button>
+
+<!-- Контейнер карты (скрыт по умолчанию) -->
+<div id="map-container" style="display:none; margin:10px auto; max-width:800px;">
+  <div id="map" style="height:350px; width:100%; border-radius:10px; border:1px solid #ddd;"></div>
+  <div id="location-status" style="text-align:center; margin:8px 0; color:#555; font-size:14px;">🗺️ Кликни на карту, чтобы указать место</div>
+  <button id="reset-loc-btn" onclick="resetLocation()" style="display:none; margin:0 auto; padding:6px 12px; border:1px solid #ccc; border-radius:6px; cursor:pointer;">🔄 Сбросить точку</button>
+</div>
+
+
+
+
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
+
+
+
+
+
+
+let map, markersLayer, selLat = null, selLng = null, tempMarker = null;
+let mapInitialized = false;
+let currentAdsData = []; // храним данные для карты
+
+function initMap() {
+  if (mapInitialized) return;
+  map = L.map('map').setView([55.7558, 37.6173], 10);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+  markersLayer = L.layerGroup().addTo(map);
+  mapInitialized = true;
+
+  map.on('click', function(e) {
+    selLat = e.latlng.lat; selLng = e.latlng.lng;
+    document.getElementById('location-status').textContent = `📍 Выбрано: ${selLat.toFixed(4)}, ${selLng.toFixed(4)}`;
+    document.getElementById('reset-loc-btn').style.display = 'inline-block';
+    if (tempMarker) map.removeLayer(tempMarker);
+    tempMarker = L.marker([selLat, selLng]).addTo(map);
+  });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const btn = document.getElementById('toggle-map-btn');
+  const container = document.getElementById('map-container');
+  btn.addEventListener('click', () => {
+    if (container.style.display === 'none') {
+      container.style.display = 'block';
+      btn.textContent = '🗺️ Скрыть карту';
+      initMap();
+      setTimeout(() => map.invalidateSize(), 100); // «будим» карту после показа
+      updateMap(currentAdsData);
+    } else {
+      container.style.display = 'none';
+      btn.textContent = '🗺️ Показать объявления на карте';
+    }
+  });
+});
+
+function updateMap(ads) {
+  if (!markersLayer) return;
+  markersLayer.clearLayers();
+  ads.forEach(ad => { if (ad.lat && ad.lng) L.marker([ad.lat, ad.lng]).bindPopup(`<b>${ad.title}</b>`).addTo(markersLayer); });
+}
+
+function resetLocation() {
+  selLat = selLng = null;
+  document.getElementById('location-status').textContent = '🗺️ Кликни на карту, чтобы указать место';
+  document.getElementById('reset-loc-btn').style.display = 'none';
+  if (tempMarker) { map.removeLayer(tempMarker); tempMarker = null; }
+}
+
+
+
+
+
+
+
+
+
+
+
   const supabaseUrl = 'https://kezprdouakvdiwjivlze.supabase.co';
   const supabaseKey = 'sb_publishable_dwckqZDHdxb1DXRLpI__5A_qcCpTPfl'; // ⚠️ бери в Supabase → Settings → API
   const db = supabase.createClient(supabaseUrl, supabaseKey);
@@ -105,11 +195,14 @@
 async function loadAds(query = '') {
   let dbQuery = db.from('ads').select('*').order('created_at', { ascending: false });
   if (query.trim()) {
-    // ilike = поиск без учёта регистра, % = «любые символы до и после»
     dbQuery = dbQuery.ilike('title', `%${query}%`);
   }
   const { data, error } = await dbQuery;
   if (error) { console.error(error); return; }
+
+  // 🗺️ Обновляем глобальный массив и перерисовываем маркеры
+  currentAdsData = data || [];
+  updateMap(currentAdsData);
 
   let html = '';
   data.forEach(ad => {
@@ -122,8 +215,13 @@ async function loadAds(query = '') {
             </div>`;
   });
   document.getElementById('ads-list').innerHTML = `<h3>Все объявления</h3>` + (html || '<p>Ничего не найдено. Попробуй другой запрос или создай новое объявление! 👆</p>');
-
 }
+
+
+
+
+
+
 
 async function deleteAd(id) {
   if (!confirm('Точно удалить?')) return;
@@ -160,6 +258,7 @@ document.addEventListener('DOMContentLoaded', () => {
   checkAuth();
   loadAds();
 });
+
 </script>
 </body>
 </html>
