@@ -17,6 +17,13 @@
   <p>Прототип приложения, которое переводит фотографии чертежей в редактируемые векторы для AutoCAD.</p>
   <!-- Откроет Telegram в новой вкладке -->
   <a href="https://t.me/твой_ник" class="btn" target="_blank">Написать в Telegram</a>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  const supabaseUrl = 'https://kezprdouakvdiwjivlze.supabase.co';
+  const supabaseKey = 'sb_publishable_dwckqZDHdxb1DXRLpI__5A_qcCpTPfl';
+  const db = supabase.createClient(supabaseUrl, supabaseKey);
+  console.log('Supabase подключён! Готовы работать с базой.');
+</script>
 </body>
 </html>
 <head>
