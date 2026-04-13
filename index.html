@@ -14,6 +14,12 @@
   </style>
 </head>
 <body>
+
+<div id="auth-status" style="margin: 10px auto; text-align: center; font-family: sans-serif;">
+  <span id="user-email">🔒 Гость</span>
+  <button id="logout-btn" onclick="logout()" style="display:none; margin-left:8px; background:#f59e0b; color:#fff; border:none; padding:6px 12px; border-radius:6px; cursor:pointer;">Выйти</button>
+</div>
+
   <h1>📦 Маркетплейс</h1>
 
   <div style="background:#f4f4f4; padding:15px; border-radius:8px; margin:10px auto; max-width:400px;">
@@ -126,6 +132,34 @@ async function deleteAd(id) {
   else loadAds();
 }
   document.addEventListener('DOMContentLoaded', () => loadAds());
+
+
+
+async function checkAuth() {
+  const { data: { user } } = await db.auth.getUser();
+  const emailSpan = document.getElementById('user-email');
+  const logoutBtn = document.getElementById('logout-btn');
+  
+  if (user) {
+    emailSpan.textContent = `👤 ${user.email}`;
+    logoutBtn.style.display = 'inline-block';
+  } else {
+    emailSpan.textContent = '🔒 Гость';
+    logoutBtn.style.display = 'none';
+  }
+}
+
+async function logout() {
+  await db.auth.signOut();
+  checkAuth();
+  loadAds(); // Обновляем ленту, чтобы RLS скрыла недоступные записи
+}
+
+// Запускаем проверку при загрузке страницы
+document.addEventListener('DOMContentLoaded', () => {
+  checkAuth();
+  loadAds();
+});
 </script>
 </body>
 </html>
