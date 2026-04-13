@@ -325,26 +325,32 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-document.addEventListener('DOMContentLoaded', () => {
+function setupMapToggle() {
   const btn = document.getElementById('toggle-map-btn');
   const container = document.getElementById('map-container');
-  if (btn && container) {
-    btn.addEventListener('click', () => {
-      if (container.style.display === 'none') {
-        container.style.display = 'block';
-        btn.textContent = '🗺️ Скрыть карту';
-        initMap(); // создаёт карту один раз
-        setTimeout(() => {
-          map.invalidateSize(); // «будим» скрытый холст
-          updateMap(currentAdsData); // отрисовка маркеров + авто-зум
-        }, 100);
-      } else {
-        container.style.display = 'none';
-        btn.textContent = '🗺️ Показать объявления на карте';
-      }
-    });
-  }
-});
+  if (!btn || !container) return; // безопасный выход, если элементы ещё не готовы
+
+  btn.addEventListener('click', () => {
+    const isHidden = container.style.display === 'none';
+    container.style.display = isHidden ? 'block' : 'none';
+    btn.textContent = isHidden ? '🗺️ Скрыть карту' : '🗺️ Показать объявления на карте';
+
+    if (isHidden) {
+      initMap();
+      setTimeout(() => {
+        map.invalidateSize(); // «будим» карту после display:none
+        updateMap(currentAdsData);
+      }, 100);
+    }
+  });
+}
+
+// Запускаем независимо от других DOMContentLoaded
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', setupMapToggle);
+} else {
+  setupMapToggle();
+}
 
 </script>
 </body>
