@@ -107,7 +107,7 @@ async function deleteAd(id) {
   if (error) alert('Ошибка удаления: ' + error.message);
   else loadAds();
 }
-  document.addEventListener('DOMContentLoaded', loadAds);
+  document.addEventListener('DOMContentLoaded', () => loadAds());
 </script>
 </body>
 </html>
