@@ -78,21 +78,27 @@
     else { msg.style.color='green'; msg.textContent = 'Добавлено!'; document.getElementById('ad-title').value=''; document.getElementById('ad-desc').value=''; fileInput.value=''; loadAds(); }
   }
 
-  async function loadAds() {
-  const { data, error } = await db.from('ads').select('*').order('created_at', { ascending: false });
-  if (error) { document.getElementById('loading').textContent = 'Ошибка: ' + error.message; return; }
-  
+async function loadAds(query = '') {
+  let dbQuery = db.from('ads').select('*').order('created_at', { ascending: false });
+  if (query.trim()) {
+    // ilike = поиск без учёта регистра, % = «любые символы до и после»
+    dbQuery = dbQuery.ilike('title', `%${query}%`);
+  }
+  const { data, error } = await dbQuery;
+  if (error) { console.error(error); return; }
+
   let html = '';
   data.forEach(ad => {
     const img = ad.image_url ? `<img src="${ad.image_url}" style="width:100%; border-radius:6px; margin-bottom:8px;">` : '';
     html += `<div style="background:#fff; padding:12px; margin-bottom:10px; border-radius:8px; border:1px solid #ddd; text-align:left; position:relative;">
-               ${img}
-               <strong>${ad.title}</strong><br>
-               <span style="color:#555; font-size:14px;">${ad.description || 'Без описания'}</span>
-               <button onclick="deleteAd(${ad.id})" style="position:absolute; top:8px; right:8px; background:#dc2626; color:#fff; border:none; border-radius:4px; padding:4px 8px; cursor:pointer; font-size:12px;">Удалить</button>
-             </div>`;
+              ${img}
+              <strong>${ad.title}</strong><br>
+              <span style="color:#555; font-size:14px;">${ad.description || 'Без описания'}</span>
+              <button onclick="deleteAd(${ad.id})" style="position:absolute; top:8px; right:8px; background:#dc2626; color:#fff; border:none; border-radius:4px; padding:4px 8px; cursor:pointer; font-size:12px;">Удалить</button>
+            </div>`;
   });
-  document.getElementById('ads-list').innerHTML = `<h3>Все объявления</h3>` + (html || '<p>Пока пусто. Создай первое! 👆</p>');
+  document.getElementById('ads-list').innerHTML = `<h3>Все объявления</h3>` + (html || '<p>Ничего не найдено. Попробуй другой запрос или создай новое объявление! 👆</p>');
+
 }
 
 async function deleteAd(id) {
