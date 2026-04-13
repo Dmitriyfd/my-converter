@@ -3,148 +3,65 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Мой первый сайт</title>
+  <title>Мой маркетплейс</title>
   <style>
-    body { font-family: system-ui, sans-serif; text-align: center; padding: 60px 20px; background: #f8fafc; }
-    h1 { color: #1e293b; margin-bottom: 10px; }
-    p { color: #475569; max-width: 500px; margin: 0 auto 30px; line-height: 1.5; }
-    .btn { display: inline-block; padding: 12px 28px; background: #2563eb; color: #fff; text-decoration: none; border-radius: 8px; font-weight: 500; }
-    .btn:hover { background: #1d4ed8; }
+    body { font-family: system-ui, sans-serif; text-align: center; padding: 40px 20px; background: #f8fafc; }
+    input, textarea { padding: 8px; width: 80%; max-width: 400px; margin: 5px 0; border: 1px solid #ccc; border-radius: 6px; }
+    button { padding: 8px 16px; background: #2563eb; color: #fff; border: none; border-radius: 6px; cursor: pointer; margin: 5px; }
+    button:hover { background: #1d4ed8; }
+    .card { background: #fff; padding: 12px; margin: 10px auto; max-width: 400px; border-radius: 8px; border: 1px solid #ddd; text-align: left; }
+    .card img { width: 100%; border-radius: 6px; margin-bottom: 8px; }
   </style>
 </head>
 <body>
-  <h1>Конвертер 2D-планов</h1>
-  <p>Прототип приложения, которое переводит фотографии чертежей в редактируемые векторы для AutoCAD.</p>
-  <!-- Откроет Telegram в новой вкладке -->
-  <a href="https://t.me/твой_ник" class="btn" target="_blank">Написать в Telegram</a>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script>
-  const supabaseUrl = 'https://kezprdouakvdiwjivlze.supabase.co';
-  const supabaseKey = 'sb_publishable_dwckqZDHdxb1DXRLpI__5A_qcCpTPfl';
-  const db = supabase.createClient(supabaseUrl, supabaseKey);
-  console.log('Supabase подключён! Готовы работать с базой.');
-</script>
+  <h1>📦 Маркетплейс</h1>
 
+  <div style="background:#f4f4f4; padding:15px; border-radius:8px; margin:10px auto; max-width:400px;">
+    <h3>Вход</h3>
+    <input id="a-email" placeholder="Email">
+    <input id="a-pass" type="password" placeholder="Пароль">
+    <button onclick="authLogin()">Войти</button>
+    <button onclick="authReg()" style="background:#16a34a;">Регистрация</button>
+    <p id="auth-msg" style="font-weight:bold;"></p>
+  </div>
 
-<div style="background:#f4f4f4; padding:15px; border-radius:8px; margin:10px 0;">
-  <h3>Вход / Регистрация</h3>
-  <input id="reg-email" placeholder="Email" style="padding:6px; width:60%; margin-right:5px;">
-  <input id="reg-pass" type="password" placeholder="Пароль" style="padding:6px; width:60%;">
-  <button onclick="registerUser()" style="padding:6px 12px; background:#2563eb; color:#fff; border:none; cursor:pointer; margin-top:5px;">Зарегистрироваться</button>
-  <p id="reg-msg" style="font-weight:bold;"></p>
-</div>
-<script>
-  async function registerUser() {
-    const email = document.getElementById('reg-email').value;
-    const pass = document.getElementById('reg-pass').value;
-    const msg = document.getElementById('reg-msg');
-    const { data, error } = await db.auth.signUp({ email, password: pass });
-    if (error) { msg.style.color='red'; msg.textContent = error.message; }
-    else { msg.style.color='green'; msg.textContent = 'Успех! Проверь консоль или войди.'; }
-  }
-</script>
+  <div id="ad-panel" style="background:#eef2ff; padding:15px; border-radius:8px; margin:10px auto; max-width:400px;">
+    <h3>Новое объявление</h3>
+    <input id="ad-title" placeholder="Название">
+    <textarea id="ad-desc" placeholder="Описание" rows="3"></textarea>
+    <input type="file" id="ad-photo" accept="image/*">
+    <button onclick="createAd()" style="background:#16a34a;">Опубликовать</button>
+    <p id="ad-msg" style="font-weight:bold;"></p>
+  </div>
 
+  <div id="ads-list" style="margin:20px auto; max-width:450px; padding:10px; background:#fafafa; border-radius:8px;">
+    <h3>Все объявления</h3>
+    <p id="loading">Загрузка...</p>
+  </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    // ⚠️ ВСТАВЬ СЮДА СВОЙ ANON PUBLIC КЛЮЧ ИЗ SUPABASE
+    const supabaseUrl = 'https://kezprdouakvdiwjivlze.supabase.co';
+    const supabaseKey = 'sb_publishable_dwckqZDHdxb1DXRLpI__5A_qcCpTPfl'; 
+    const db = supabase.createClient(supabaseUrl, supabaseKey);
 
-<div id="ad-panel" style="background:#eef2ff; padding:12px; border-radius:8px; margin:10px 0;">
-  <h3>Новое объявление</h3>
-  <input id="ad-title" placeholder="Название" style="padding:5px; width:80%; margin-bottom:5px;">
-  <textarea id="ad-desc" placeholder="Описание" style="padding:5px; width:80%; height:50px; margin-bottom:5px;"></textarea>
-  <input type="file" id="ad-photo" accept="image/*" style="margin-bottom:5px;">
-  <button onclick="createAd()" style="padding:5px 12px; background:#16a34a; color:#fff; border:none; cursor:pointer;">Опубликовать</button>
-  <p id="ad-msg" style="font-weight:bold;"></p>
-</div>
-<script>
-async function createAd() {
-  const title = document.getElementById('ad-title').value;
-  const desc = document.getElementById('ad-desc').value;
-  const fileInput = document.getElementById('ad-photo');
-  const msg = document.getElementById('ad-msg');
-  let photoUrl = null;
-
-  if (fileInput.files.length > 0) {
-    const file = fileInput.files[0];
-    const fileName = `${Date.now()}_${file.name}`;
-    const { data, error } = await db.storage.from('ad-photos').upload(fileName, file);
-    if (error) { msg.style.color='red'; msg.textContent = 'Ошибка фото: ' + error.message; return; }
-    const { publicUrl } = db.storage.from('ad-photos').getPublicUrl(fileName).data;
-    photoUrl = publicUrl;
-  }
-
-  const { error } = await db.from('ads').insert({ title, description: desc, image_url: photoUrl });
-  if (error) { msg.style.color='red'; msg.textContent = 'Ошибка: ' + error.message; }
-  else { 
-    msg.style.color='green'; msg.textContent = 'Объявление добавлено!'; 
-    document.getElementById('ad-title').value = ''; document.getElementById('ad-desc').value = ''; fileInput.value = '';
-    loadAds();
-  }
-}
-</script>
-
-
-
-
-<div id="ads-list" style="margin:20px 0; padding:10px; background:#fafafa; border-radius:8px;">
-  <h3>Все объявления</h3>
-  <p id="loading">Загрузка...</p>
-</div>
-<script>
-async function loadAds() {
-  const container = document.getElementById('ads-list');
-  const { data, error } = await db.from('ads').select('*').order('created_at', { ascending: false });
-  if (error) { document.getElementById('loading').textContent = 'Ошибка: ' + error.message; return; }
-  
-  let html = '';
-  data.forEach(ad => {
-    const img = ad.image_url 
-      ? `<img src="${ad.image_url}" style="width:100%; max-height:200px; object-fit:cover; border-radius:4px; margin-bottom:8px;">` 
-      : '';
-    html += `<div style="background:#fff; padding:12px; margin-bottom:8px; border-radius:6px; border:1px solid #ddd;">
-               ${img}
-               <strong>${ad.title}</strong><br>
-               <span style="color:#555; font-size:14px;">${ad.description || 'Без описания'}</span>
-             </div>`;
-  });
-  container.innerHTML = html || '<p>Пока нет объявлений. Создай первое! 👆</p>';
-}
-</script>
-
-<div id="ads-list" style="margin:20px 0; padding:10px; background:#fafafa; border-radius:8px;">
-  <h3>Все объявления</h3>
-  <p id="loading">Загрузка...</p>
-</div>
-<script>
-  async function loadAds() {
-    const container = document.getElementById('ads-list');
-    const { data, error } = await db.from('ads').select('*').order('created_at', { ascending: false });
-    if (error) { document.getElementById('loading').textContent = 'Ошибка: ' + error.message; return; }
-    
-    let html = '';
-    data.forEach(ad => {
-      html += `<div style="background:#fff; padding:12px; margin-bottom:8px; border-radius:6px; border:1px solid #ddd;">
-                 <strong>${ad.title}</strong><br>
-                 <span style="color:#555; font-size:14px;">${ad.description || 'Без описания'}</span>
-               </div>`;
-    });
-    container.innerHTML = html || '<p>Пока нет объявлений. Создай первое! 👆</p>';
-  }
-
-  async function createAd() {
-    const title = document.getElementById('ad-title').value;
-    const desc = document.getElementById('ad-desc').value;
-    const msg = document.getElementById('ad-msg');
-    const { error } = await db.from('ads').insert({ title, description: desc });
-    if (error) { msg.style.color='red'; msg.textContent = 'Ошибка: ' + error.message; }
-    else { 
-      msg.style.color='green'; msg.textContent = 'Объявление добавлено!'; 
-      document.getElementById('ad-title').value = ''; document.getElementById('ad-desc').value = '';
-      loadAds(); // ← автоматически подтягиваем свежие данные
+    // 1. Авторизация
+    async function authLogin() {
+      const e = document.getElementById('a-email').value;
+      const p = document.getElementById('a-pass').value;
+      const { error } = await db.auth.signInWithPassword({ email: e, password: p });
+      document.getElementById('auth-msg').textContent = error ? error.message : '✅ Вошли!';
+      document.getElementById('auth-msg').style.color = error ? 'red' : 'green';
     }
-  }
-  document.addEventListener('DOMContentLoaded', loadAds);
-</script>
+    async function authReg() {
+      const e = document.getElementById('a-email').value;
+      const p = document.getElementById('a-pass').value;
+      const { error } = await db.auth.signUp({ email: e, password: p });
+      document.getElementById('auth-msg').textContent = error ? error.message : '✅ Аккаунт создан. Войди!';
+      document.getElementById('auth-msg').style.color = error ? 'red' : 'green';
+    }
 
-
-</body>
-</html>
-<head>
+    // 2. Создание объявления с фото
+    async function createAd() {
+      const title = document.getElementById('ad-title').value
