@@ -76,15 +76,28 @@
   }
 
   async function loadAds() {
-    const { data, error } = await db.from('ads').select('*').order('created_at', { ascending: false });
-    if (error) { document.getElementById('loading').textContent = 'Ошибка: ' + error.message; return; }
-    let html = '';
-    data.forEach(ad => {
-      const img = ad.image_url ? `<img src="${ad.image_url}" style="width:100%; border-radius:6px; margin-bottom:8px;">` : '';
-      html += `<div style="background:#fff; padding:12px; margin-bottom:10px; border-radius:8px; border:1px solid #ddd; text-align:left;">${img}<strong>${ad.title}</strong><br><span style="color:#555; font-size:14px;">${ad.description || 'Без описания'}</span></div>`;
-    });
-    document.getElementById('ads-list').innerHTML = `<h3>Все объявления</h3>` + (html || '<p>Пока пусто. Создай первое! 👆</p>');
-  }
+  const { data, error } = await db.from('ads').select('*').order('created_at', { ascending: false });
+  if (error) { document.getElementById('loading').textContent = 'Ошибка: ' + error.message; return; }
+  
+  let html = '';
+  data.forEach(ad => {
+    const img = ad.image_url ? `<img src="${ad.image_url}" style="width:100%; border-radius:6px; margin-bottom:8px;">` : '';
+    html += `<div style="background:#fff; padding:12px; margin-bottom:10px; border-radius:8px; border:1px solid #ddd; text-align:left; position:relative;">
+               ${img}
+               <strong>${ad.title}</strong><br>
+               <span style="color:#555; font-size:14px;">${ad.description || 'Без описания'}</span>
+               <button onclick="deleteAd(${ad.id})" style="position:absolute; top:8px; right:8px; background:#dc2626; color:#fff; border:none; border-radius:4px; padding:4px 8px; cursor:pointer; font-size:12px;">Удалить</button>
+             </div>`;
+  });
+  document.getElementById('ads-list').innerHTML = `<h3>Все объявления</h3>` + (html || '<p>Пока пусто. Создай первое! 👆</p>');
+}
+
+async function deleteAd(id) {
+  if (!confirm('Точно удалить?')) return;
+  const { error } = await db.from('ads').delete().eq('id', id);
+  if (error) alert('Ошибка удаления: ' + error.message);
+  else loadAds();
+}
   document.addEventListener('DOMContentLoaded', loadAds);
 </script>
 </body>
