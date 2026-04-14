@@ -133,6 +133,24 @@ function updateMap(ads) {
   }
 }
 
+
+function setupMapToggle() {
+  const btn = document.getElementById('toggle-map-btn');
+  const container = document.getElementById('map-container');
+  if (!btn || !container) return;
+  btn.onclick = () => {
+    const isHidden = container.style.display === 'none';
+    container.style.display = isHidden ? 'block' : 'none';
+    btn.textContent = isHidden ? '🗺️ Скрыть карту' : '🗺️ Показать объявления на карте';
+    if (isHidden) {
+      initMap();
+      setTimeout(() => { map.invalidateSize(); updateMap(currentAdsData); }, 100);
+    }
+  };
+}
+
+
+
 // 🔹 4. МОДАЛКА & СБРОС
 function openAdDetail(id) {
   const ad = currentAdsData.find(a => a.id == id);
@@ -157,11 +175,9 @@ function resetLocation() {
 // 🔹 5. SUPABASE ФУНКЦИИ
 async function authLogin() {
   const { error } = await db.auth.signInWithPassword({ email: document.getElementById('a-email').value, password: document.getElementById('a-pass').value });
-  const m = document.getElementById('auth-msg'); m.textContent = error ? error.message : '✅ Вошли
-
-!'; m.style.color = error ? 'red' : 'green';
-      checkAuth(); loadAds();
-    }
+  const m = document.getElementById('auth-msg'); m.textContent = error ? error.message : '✅ Вошли!'; m.style.color = error ? 'red' : 'green';
+  checkAuth(); loadAds();
+}
 
     async function authReg() {
       const { error } = await db.auth.signUp({ email: document.getElementById('a-email').value, password: document.getElementById('a-pass').value });
