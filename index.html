@@ -90,15 +90,17 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 
+// 🔹 1. SUPABASE
+const supabaseUrl = 'https://kezprdouakvdiwjivlze.supabase.co';
+const supabaseKey = 'sb_publishable_dwckqZDHdxb1DXRLpI__5A_qcCpTPfl';
+const db = supabase.createClient(supabaseUrl, supabaseKey);
 
-
-
-
-
+// 🔹 2. ПЕРЕМЕННЫЕ
 let map, markersLayer, selLat = null, selLng = null, tempMarker = null;
 let mapInitialized = false;
-let currentAdsData = []; // храним данные для карты
+let currentAdsData = [];
 
+// 🔹 3. КАРТА
 function initMap() {
   if (mapInitialized) return;
   map = L.map('map').setView([55.7558, 37.6173], 10);
@@ -106,7 +108,7 @@ function initMap() {
   markersLayer = L.layerGroup().addTo(map);
   mapInitialized = true;
 
-  map.on('click', function(e) {
+  map.on('click', e => {
     selLat = e.latlng.lat; selLng = e.latlng.lng;
     document.getElementById('location-status').textContent = `📍 Выбрано: ${selLat.toFixed(4)}, ${selLng.toFixed(4)}`;
     document.getElementById('reset-loc-btn').style.display = 'inline-block';
@@ -115,79 +117,35 @@ function initMap() {
   });
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-  const btn = document.getElementById('toggle-map-btn');
-  const container = document.getElementById('map-container');
-  btn.addEventListener('click', () => {
-    if (container.style.display === 'none') {
-      container.style.display = 'block';
-      btn.textContent = '🗺️ Скрыть карту';
-      initMap();
-      setTimeout(() => map.invalidateSize(), 100); // «будим» карту после показа
-      updateMap(currentAdsData);
-    } else {
-      container.style.display = 'none';
-      btn.textContent = '🗺️ Показать объявления на карте';
-    }
-  });
-});
-
-
-
-
 function updateMap(ads) {
   if (!markersLayer) return;
   markersLayer.clearLayers();
   const coords = [];
-
   ads.forEach(ad => {
     if (ad.lat && ad.lng) {
       coords.push([ad.lat, ad.lng]);
-      const popupContent = `
-        <div style="text-align:center; min-width:130px;">
-          <strong>${ad.title}</strong><br>
-          <button onclick="event.stopPropagation(); openAdDetail('${ad.id}')" 
-                  style="margin-top:6px; padding:4px 10px; background:#3b82f6; color:#fff; border:none; border-radius:4px; cursor:pointer; font-size:12px;">
-            Открыть объявление
-          </button>
-        </div>`;
-      L.marker([ad.lat, ad.lng]).bindPopup(popupContent).addTo(markersLayer);
+      const popup = `<div style="text-align:center;min-width:130px;"><strong>${ad.title}</strong><br><button onclick="event.stopPropagation();openAdDetail('${ad.id}')" style="margin-top:6px;padding:4px 10px;background:#3b82f6;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:12px;">Открыть</button></div>`;
+      L.marker([ad.lat, ad.lng]).bindPopup(popup).addTo(markersLayer);
     }
   });
-
-  // 📐 Авто-зум: подгоняем карту под все точки, если она видна
   if (coords.length > 0 && document.getElementById('map-container').style.display !== 'none') {
     map.fitBounds(L.latLngBounds(coords), { padding: [40, 40] });
   }
 }
 
-
-
-
+// 🔹 4. МОДАЛКА & СБРОС
 function openAdDetail(id) {
   const ad = currentAdsData.find(a => a.id == id);
   if (!ad) return;
   document.getElementById('modal-title').textContent = ad.title;
   document.getElementById('modal-desc').textContent = ad.description || 'Без описания';
-  const coordsEl = document.getElementById('modal-coords');
-  coordsEl.textContent = ad.lat && ad.lng ? `📍 ${ad.lat.toFixed(4)}, ${ad.lng.toFixed(4)}` : '';
-  const imgEl = document.getElementById('modal-img');
-  if (ad.image_url) { imgEl.src = ad.image_url; imgEl.style.display = 'block'; }
-  else { imgEl.style.display = 'none'; }
+  document.getElementById('modal-coords').textContent = ad.lat && ad.lng ? `📍 ${ad.lat.toFixed(4)}, ${ad.lng.toFixed(4)}` : '';
+  const img = document.getElementById('modal-img');
+  if (ad.image_url) { img.src = ad.image_url; img.style.display = 'block'; } 
+  else { img.style.display = 'none'; }
   document.getElementById('ad-modal').style.display = 'flex';
 }
-
-function closeAdModal() {
-  document.getElementById('ad-modal').style.display = 'none';
-}
-document.getElementById('ad-modal').addEventListener('click', (e) => {
-  if (e.target.id === 'ad-modal') closeAdModal();
-});
-
-
-
-
-
+function closeAdModal() { document.getElementById('ad-modal').style.display = 'none'; }
 
 function resetLocation() {
   selLat = selLng = null;
@@ -196,161 +154,84 @@ function resetLocation() {
   if (tempMarker) { map.removeLayer(tempMarker); tempMarker = null; }
 }
 
+// 🔹 5. SUPABASE ФУНКЦИИ
+async function authLogin() {
+  const { error } = await db.auth.signInWithPassword({ email: document.getElementById('a-email').value, password: document.getElementById('a-pass').value });
+  const m = document.getElementById('auth-msg'); m.textContent = error ? error.message : '✅ Вошли
 
-
-
-
-
-
-
-
-
-
-  const supabaseUrl = 'https://kezprdouakvdiwjivlze.supabase.co';
-  const supabaseKey = 'sb_publishable_dwckqZDHdxb1DXRLpI__5A_qcCpTPfl'; // ⚠️ бери в Supabase → Settings → API
-  const db = supabase.createClient(supabaseUrl, supabaseKey);
-
-  async function authLogin() {
-    const { error } = await db.auth.signInWithPassword({ email: document.getElementById('a-email').value, password: document.getElementById('a-pass').value });
-    const m = document.getElementById('auth-msg'); m.textContent = error ? error.message : '✅ Вошли!'; m.style.color = error ? 'red' : 'green';
-  }
-  async function authReg() {
-    const { error } = await db.auth.signUp({ email: document.getElementById('a-email').value, password: document.getElementById('a-pass').value });
-    const m = document.getElementById('auth-msg'); m.textContent = error ? error.message : '✅ Создан! Теперь войди.'; m.style.color = error ? 'red' : 'green';
-  }
-async function createAd() {
-  const title = document.getElementById('ad-title').value.trim();
-  const desc = document.getElementById('ad-desc').value.trim();
-  const fileInput = document.getElementById('ad-photo');
-  const msg = document.getElementById('ad-msg');
-
-  if (!title || !desc) { msg.style.color='red'; msg.textContent='Заполни название и описание'; return; }
-  const { data: { user } } = await db.auth.getUser();
-  if (!user) { msg.style.color='red'; msg.textContent='Войдите, чтобы создать объявление'; return; }
-  if (selLat === null || selLng === null) { msg.style.color='red'; msg.textContent='🗺️ Кликни на карту, чтобы указать место'; return; }
-
-  let photoUrl = null;
-  if (fileInput.files.length > 0) {
-    const file = fileInput.files[0];
-    const fileName = `${Date.now()}_${file.name}`;
-    const { error: upErr } = await db.storage.from('ad-photos').upload(fileName, file);
-    if (upErr) { msg.style.color='red'; msg.textContent = 'Ошибка фото: ' + upErr.message; return; }
-    photoUrl = db.storage.from('ad-photos').getPublicUrl(fileName).data.publicUrl;
-  }
-
-  const { error } = await db.from('ads').insert({
-    title, description: desc, image_url: photoUrl, user_id: user.id,
-    lat: selLat, lng: selLng
-  });
-
-  if (error) { msg.style.color='red'; msg.textContent = 'Ошибка: ' + error.message; }
-  else {
-    msg.style.color='green'; msg.textContent = 'Добавлено!';
-    document.getElementById('ad-title').value=''; document.getElementById('ad-desc').value=''; fileInput.value='';
-    resetLocation();
-    loadAds(); // автоматически обновит и список, и карту
-  }
-  
-}
-
-async function loadAds(query = '') {
-  let dbQuery = db.from('ads').select('*').order('created_at', { ascending: false });
-  if (query.trim()) {
-    dbQuery = dbQuery.ilike('title', `%${query}%`);
-  }
-  const { data, error } = await dbQuery;
-  if (error) { console.error(error); return; }
-
-  // 🗺️ Обновляем глобальный массив и перерисовываем маркеры
-  currentAdsData = data || [];
-  updateMap(currentAdsData);
-
-  let html = '';
-  data.forEach(ad => {
-    const img = ad.image_url ? `<img src="${ad.image_url}" style="width:100%; border-radius:6px; margin-bottom:8px;">` : '';
-    html += `<div style="background:#fff; padding:12px; margin-bottom:10px; border-radius:8px; border:1px solid #ddd; text-align:left; position:relative;">
-              ${img}
-              <strong>${ad.title}</strong><br>
-              <span style="color:#555; font-size:14px;">${ad.description || 'Без описания'}</span>
-              <button onclick="deleteAd(${ad.id})" style="position:absolute; top:8px; right:8px; background:#dc2626; color:#fff; border:none; border-radius:4px; padding:4px 8px; cursor:pointer; font-size:12px;">Удалить</button>
-            </div>`;
-  });
-  document.getElementById('ads-list').innerHTML = `<h3>Все объявления</h3>` + (html || '<p>Ничего не найдено. Попробуй другой запрос или создай новое объявление! 👆</p>');
-}
-
-
-
-
-
-
-
-async function deleteAd(id) {
-  if (!confirm('Точно удалить?')) return;
-  const { error } = await db.from('ads').delete().eq('id', id);
-  if (error) alert('Ошибка удаления: ' + error.message);
-  else loadAds();
-}
-  document.addEventListener('DOMContentLoaded', () => loadAds());
-
-
-
-async function checkAuth() {
-  const { data: { user } } = await db.auth.getUser();
-  const emailSpan = document.getElementById('user-email');
-  const logoutBtn = document.getElementById('logout-btn');
-  
-  if (user) {
-    emailSpan.textContent = `👤 ${user.email}`;
-    logoutBtn.style.display = 'inline-block';
-  } else {
-    emailSpan.textContent = '🔒 Гость';
-    logoutBtn.style.display = 'none';
-  }
-}
-
-async function logout() {
-  await db.auth.signOut();
-  checkAuth();
-  loadAds(); // Обновляем ленту, чтобы RLS скрыла недоступные записи
-}
-
-// Запускаем проверку при загрузке страницы
-document.addEventListener('DOMContentLoaded', () => {
-  checkAuth();
-  loadAds();
-});
-
-
-
-
-
-
-function setupMapToggle() {
-  const btn = document.getElementById('toggle-map-btn');
-  const container = document.getElementById('map-container');
-  if (!btn || !container) return; // безопасный выход, если элементы ещё не готовы
-
-  btn.addEventListener('click', () => {
-    const isHidden = container.style.display === 'none';
-    container.style.display = isHidden ? 'block' : 'none';
-    btn.textContent = isHidden ? '🗺️ Скрыть карту' : '🗺️ Показать объявления на карте';
-
-    if (isHidden) {
-      initMap();
-      setTimeout(() => {
-        map.invalidateSize(); // «будим» карту после display:none
-        updateMap(currentAdsData);
-      }, 100);
+!'; m.style.color = error ? 'red' : 'green';
+      checkAuth(); loadAds();
     }
-  });
-}
 
-// Запускаем независимо от других DOMContentLoaded
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', setupMapToggle);
-} else {
-  setupMapToggle();
-}
+    async function authReg() {
+      const { error } = await db.auth.signUp({ email: document.getElementById('a-email').value, password: document.getElementById('a-pass').value });
+      const m = document.getElementById('auth-msg'); m.textContent = error ? error.message : '✅ Создан! Проверь почту и войди.'; m.style.color = error ? 'red' : 'green';
+    }
+
+    async function createAd() {
+      const title = document.getElementById('ad-title').value.trim();
+      const desc = document.getElementById('ad-desc').value.trim();
+      const fileInput = document.getElementById('ad-photo');
+      const msg = document.getElementById('ad-msg');
+
+      if (!title || !desc) { msg.style.color='red'; msg.textContent='Заполни название и описание'; return; }
+      const { data: { user } } = await db.auth.getUser();
+      if (!user) { msg.style.color='red'; msg.textContent='Войдите, чтобы создать объявление'; return; }
+      if (selLat === null || selLng === null) { msg.style.color='red'; msg.textContent='🗺️ Кликни на карту, чтобы указать место'; return; }
+
+      let photoUrl = null;
+      if (fileInput.files.length > 0) {
+        const file = fileInput.files[0];
+        const fileName = `${Date.now()}_${file.name}`;
+        const { error: upErr } = await db.storage.from('ad-photos').upload(fileName, file);
+        if (upErr) { msg.style.color='red'; msg.textContent = 'Ошибка фото: ' + upErr.message; return; }
+        photoUrl = db.storage.from('ad-photos').getPublicUrl(fileName).data.publicUrl;
+      }
+
+      const { error } = await db.from('ads').insert({ title, description: desc, image_url: photoUrl, user_id: user.id, lat: selLat, lng: selLng });
+      if (error) { msg.style.color='red'; msg.textContent = 'Ошибка: ' + error.message; }
+      else {
+        msg.style.color='green'; msg.textContent = 'Добавлено!';
+        document.getElementById('ad-title').value=''; document.getElementById('ad-desc').value=''; fileInput.value='';
+        resetLocation(); loadAds();
+      }
+    }
+
+    async function loadAds(query = '') {
+      let dbQuery = db.from('ads').select('*').order('created_at', { ascending: false });
+      if (query.trim()) dbQuery = dbQuery.ilike('title', `%${query}%`);
+      const { data, error } = await dbQuery;
+      if (error) { console.error(error); return; }
+
+      currentAdsData = data || [];
+      updateMap(currentAdsData);
+
+      let html = '';
+      currentAdsData.forEach(ad => {
+        const img = ad.image_url ? `<img src="${ad.image_url}" style="width:100%; border-radius:6px; margin-bottom:8px;">` : '';
+        html += `<div style="background:#fff; padding:12px; margin-bottom:10px; border-radius:8px; border:1px solid #ddd; text-align:left; position:relative;">
+                  ${img}<strong>${ad.title}</strong><br>
+                  <span style="color:#555; font-size:14px;">${ad.description || 'Без описания'}</span>
+                  <button onclick="deleteAd(${ad.id})" style="position:absolute; top:8px; right:8px; background:#dc2626; color:#fff; border:none; border-radius:4px; padding:4px 8px; cursor:pointer; font-size:12px;">Удалить</button>
+                </div>`;
+      });
+      document.getElementById('ads-list').innerHTML = `<h3>Все объявления</h3>` + (html || '<p>Ничего не найдено. Попробуй другой запрос или создай новое объявление! 👆</p>');
+    }
+
+    async function deleteAd(id) {
+      if (!confirm('Точно удалить?')) return;
+      const { error } = await db.from('ads').delete().eq('id', id);
+      if (error) alert('Ошибка удаления: ' + error.message);
+      else loadAds();
+    }
+
+    async function checkAuth() {
+      const { data: { user } } = await db.auth.getUser();
+      const emailSpan = document.getElementById('user-email');
+      const logoutBtn = document.getElementById('logout-btn');
+
+
+
 
 </script>
 </body>
