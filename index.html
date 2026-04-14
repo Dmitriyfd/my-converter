@@ -229,7 +229,30 @@ async function authLogin() {
       const { data: { user } } = await db.auth.getUser();
       const emailSpan = document.getElementById('user-email');
       const logoutBtn = document.getElementById('logout-btn');
+if (user) {
+      emailSpan.textContent = `👤 ${user.email}`;
+      logoutBtn.style.display = 'inline-block';
+    } else {
+      emailSpan.textContent = '🔒 Гость';
+      logoutBtn.style.display = 'none';
+    }
+  }
 
+  async function logout() {
+    await db.auth.signOut();
+    checkAuth();
+    loadAds();
+  }
+
+  // 🔹 ЕДИНЫЙ ЗАПУСК (без конфликтов и повторов)
+  document.addEventListener('DOMContentLoaded', () => {
+    checkAuth();
+    loadAds();
+    setupMapToggle();
+
+    const modal = document.getElementById('ad-modal');
+    if (modal) modal.addEventListener('click', (e) => { if (e.target === modal) closeAdModal(); });
+  });
 
 
 
